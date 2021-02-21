@@ -39,6 +39,12 @@ class Sorter{
 		return $this;
 	}
 	
+	public function addTable(string $table, ?string $defaultField=NULL, ?string $defaultDir=NULL){
+		if(isset($this->tables[$table])) throw new \Exception("Table [$table] has already been defined.");
+		$parts = $defaultField ? explode(' ', $defaultField) : [];
+		$this->setTable($table, $parts[0] ?? NULL, $defaultDir ?? $parts[1] ?? NULL);
+	}
+	
 	public function setTables(array $tables){
 		foreach($tables as $table=>$data){
 			$parts = explode(' ', $data);
@@ -48,7 +54,7 @@ class Sorter{
 	}
 	
 	public function setTable(string $table, ?string $defaultField=NULL, ?string $defaultDir=NULL){
-		$this->tables[] = new SorterTable($table, [
+		$this->tables[$table] = new SorterTable($table, [
 			'defaultField'=>$defaultField,
 			'defaultDir'=>$defaultDir,
 			'currentField'=>$this->currentSort[$table][static::GET_FIELD_KEY] ?? NULL,
@@ -58,14 +64,14 @@ class Sorter{
 	}
 	
 	// gets sort string for sql
-	public function getSort(?string $table=NULL):string{
-		$table = $table ? $this->tables[$table] : reset($this->tables);
+	public function getSort(?string $tableName=NULL):string{
+		$table = $tableName ? $this->tables[$tableName] : reset($this->tables);
 		return $table->getSort();
 	}
 	
 	// gets the current direction for a field, or NULL if it isn't being sorted by this field
-	public function currentDir(string $field, ?string $table=NULL):?string{
-		$table = $table ? $this->tables[$table] : reset($this->tables);
+	public function currentDir(string $field, ?string $tableName=NULL):?string{
+		$table = $tableName ? $this->tables[$tableName] : reset($this->tables);
 		$parts = explode(' ', $field);
 		$field = $parts[0] ?? $field;
 		return ($table->currentField === $field) ? $table->dir() : NULL;
@@ -106,8 +112,8 @@ class Sorter{
 	}
 	
 	// utility - get sort array for GET
-	public function queryArray(string $field, ?string $table=NULL):array{
-		$table = $table ? $this->tables[$table] : reset($this->tables);
+	public function queryArray(string $field, ?string $tableName=NULL):array{
+		$table = $tableName ? $this->tables[$tableName] : reset($this->tables);
 		$parts = explode(' ', $field);
 		$field = $parts[0] ?? $field;
 		$dir = $parts[1] ?? $table->dir();
