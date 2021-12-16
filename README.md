@@ -34,11 +34,39 @@ Just all getSort($tableName) to get the current sort field and direction. If non
 	// if you have more than one table, you'll want to pass the name
 	model('MyModel')->orderBy($sorter->getSort('foo'))->findAll();
 ```
-In your view, build links in your view using anchorIcon(), anchor(), url(), queryString() or queryArray()
+In your view, use QuickTable to configure columns, templates, and output the thead and tbody:
 ```
-	// if you don't pass the sorter in the view, you'll need to get it via service
-	<?php $sorter = service('Sorter'); ?>
+<?php
+$qt = $sorter->quickTable('foo') // pass the table name, or you can omit for only 1 table
+	// define your columns and how you'd like the values to be formatted...
+	// simple
+	->addCol('customer_id', 'Customer Number')
 	
+	// template with variable substitution
+	->addCol('customer_address', 'Address', 'asc', '$customer_address<br>$customer_city')
+	
+	// typical formats
+	->addCol('balance', 	'Balance', 		'desc', 'money')
+	->addCol('widgetcount', '# of Widgets', 'desc', 'number')	// number with grouped thousands
+	->addCol('ph_level', 	'pH', 			'desc', 'number_1') // 1 decimal place
+	->addCol('created', 	'Created', 		'desc', 'datetime') 
+	->addCol('thetime', 	'Time', 		'desc', 'time')
+	->addCol('schedule', 	'Sched Date', 	'desc', 'dateFormat_D m/d') // custom date format
+	
+	// custom function (most flexible - however you MUST return TD tags)
+	->addCol('customer_iscash', 'Cash', 'desc', function($value, $row){ 
+		return '<td class="bg-success">'.($value ? 'Yes' : 'No').'</td>'; 
+	})
+;
+?>
+<table class="table">
+	<?= $qt->thead() ?>
+	<?= $qt->tbody($customers) ?>
+</table>
+```
+
+For more control, you can also build links in your view using anchorIcon(), anchor(), url(), queryString() or queryArray()
+```
 	<th><?= $sorter->anchorIcon('category_ordernum desc', 'Order') ?></th>
 	
 	// or if you have more than one table:

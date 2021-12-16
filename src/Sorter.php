@@ -4,14 +4,19 @@
 	Controls sorting in tables.
 	
 	// get the library, and optionally define your table with default field and order, separated with a space
-	$sorter = service('sorter', ['cat'=>'category_ordernum asc']); // you can define more than one table too
+	$sorter = service('sorter', ['categories'=>'category_ordernum asc']); // you can define more than one table too
 	
 	// use it in your query
 	$model->orderBy($sorter->getSort())->findAll();
 	// or if you have more than one table:
-	$model->orderBy($sorter->getSort('cat'))->findAll();
+	$model->orderBy($sorter->getSort('categories'))->findAll();
 	
-	// build links in your view using anchorIcon(), anchor(), url(), queryString() or queryArray()
+	// use QuickTable for simple tables. See QuickTable class for documentation
+	$catTable = $sorter->quickTable('categories')->addCol('category_name', 'Category');
+	$thead = $catTable->thead();
+	$tbody = $catTable->tbody($categories);
+	
+	// or, build links in your view using anchorIcon(), anchor(), url(), queryString() or queryArray()
 	<th><?= $sorter->anchorIcon('category_ordernum desc', 'Order') ?></th>
 	// or if you have more than one table:
 	<th><?= $sorter->anchorIcon('category_ordernum desc', 'Order', '', 'cat') ?></th>
@@ -32,6 +37,13 @@ class Sorter{
 		$this->currentGetArray = $request->getGet() ?? [];
 		$this->currentSort = $request->getGet(static::GET_SORT_KEY) ?? [];
 		$this->setTables($tables);
+	}
+	
+	public function quickTable(?string $tableName = NULL):QuickTable{
+		$tableName = $tableName ?? reset($this->tableNames());
+		$qt = new QuickTable($this);
+		$qt->setTable($tableName);
+		return $qt;
 	}
 	
 	public function setUrl(string $url){
@@ -61,6 +73,11 @@ class Sorter{
 			'currentDir'=>$this->currentSort[$table][static::GET_DIR_KEY] ?? NULL,
 		]);
 		return $this;
+	}
+	
+	// get table names that have been defined
+	public function tableNames():array{
+		return array_keys($this->tables);
 	}
 	
 	// gets sort string for sql
