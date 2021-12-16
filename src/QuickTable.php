@@ -1,65 +1,31 @@
 <?php namespace Tomkirsch\Sorter;
 /*
 	Quickly output <table> html for a database result.
-	Example: 
-	
-<?php
-$qt = new QuickTable();
-// define your columns and how you'd like the values to be formatted
-$qt
-	->addCol('customer_id', 'Customer Number')
-	
-	// variable substitution
-	->addCol('customer_address', 'Address', 'asc', '$customer_address<br>$customer_city')
-	
-	// typical formats
-	->addCol('balance', 	'Balance', 		'desc', 'money')
-	->addCol('widgetcount', '# of Widgets', 'desc', 'number')
-	->addCol('ph_level', 	'pH', 			'desc', 'number_1') // 1 decimal place
-	->addCol('created', 	'Created', 		'desc', 'datetime') 
-	->addCol('thetime', 	'Time', 		'desc', 'time')
-	->addCol('schedule', 	'Sched Date', 	'desc', 'dateFormat_m/d') // custom date format
-	
-	// custom function (most flexible - however you MUST return TD tags)
-	->addCol('customer_iscash', 'Cash', 'desc', function($value, $row){ 
-		return '<td class="bg-success">'.($value ? 'Yes' : 'No').'</td>'; 
-	}) 
-;
-?>
-<table class="table">
-	<?= $qt->thead() ?>
-	<?= $qt->tbody($customers) ?>
-</table>
 */
 
 use CodeIgniter\I18n\Time;
 
 class QuickTable{
 	protected $currentTable;
-	protected $sorter;
 	protected $cols = [];
 	
-	public function __construct(?Sorter $sorter){
-		$this->sorter = $sorter ?? service('sorter');
-	}
-	
-	public function setTable(string $tableName){
+	public function __construct(string $tableName){
 		$this->currentTable = $tableName;
-		return $this;
 	}
 	
 	public function addCol(?string $field, string $label, ?string $defaultSort='asc', $template=NULL){
-		$this->currentTable = $this->currentTable ?? reset($this->sorter->tableNames());
 		$qc = new QuickCol();
-		$qc->table = $tthis->currentTable;
+		$qc->table = $this->currentTable;
 		$qc->field = $field;
 		$qc->defaultSort = $defaultSort;
 		$qc->template = $template;
 		$this->cols[] = $qc;
 		return $this;
 	}
-	
-	public function thead(?string $tableName=NULL):string{
+	public function table(array $data, string $attr=''):string{
+		return "<table $attr>".$this->thead().$this->tbody($data)."</table>";
+	}
+	public function thead():string{
 		$out = '<thead>';
 		foreach($this->cols as $col){
 			$out .= "<tr>".$col->th()."</tr>";
@@ -67,7 +33,7 @@ class QuickTable{
 		$out .= '</thead>';
 		return $out;
 	}
-	public function tbody(array $data, ?string $tableName=NULL):string{
+	public function tbody(array $data):string{
 		$out = '<tbody>';
 		foreach($data as $row){
 			$out .= $this->tr($row);
@@ -75,7 +41,7 @@ class QuickTable{
 		$out .= '</tbody>';
 		return $out;
 	}
-	public function tr($row, ?string $idField=NULL, ?string $tableName=NULL):string{		
+	public function tr($row, ?string $idField=NULL):string{		
 		if(is_array($row)) $row = (object) $row;
 		$dataAttr = $idField ? 'data-'.$idField.'="'.esc($row->$idField, 'attr').'"' : '';
 		$out = "<tr $dataAttr>";
@@ -152,12 +118,18 @@ class QuickCol{
 			$templateName = substr($templateName, 0, $pos);
 		}
 		switch($this->template){
+			case 'yesno':
+				if($argument === NULL) return '';
+				return (bool) $value ? 'Yes' : 'No';
 			case 'number':
 				if($argument !== NULL){
 					return ($value === NULL) ? '' : number_format($value, intval($argument));
 				}
 				return ($value === NULL) ? '' : number_format($value);
 			case 'money': 
+				if($value === NULL) return '';
+				return '$'.number_format($value, 2);
+			case 'balance':
 				if($value === NULL) return '';
 				$s = '$'.number_format(abs($value), 2);
 				return (floatval($value) < 0) ? "($s)" : $s;

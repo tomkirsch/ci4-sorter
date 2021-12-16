@@ -29,10 +29,10 @@ To add tables, use the addTable() method:
 Just all getSort($tableName) to get the current sort field and direction. If none are passed, it'll use the default you specified above.
 ```
 	// this quick version uses the first table
-	model('MyModel')->orderBy($sorter->getSort())->findAll();
+	$list = model('MyModel')->orderBy($sorter->getSort())->findAll();
 	
 	// if you have more than one table, you'll want to pass the name
-	model('MyModel')->orderBy($sorter->getSort('foo'))->findAll();
+	$list = model('MyModel')->orderBy($sorter->getSort('foo'))->findAll();
 ```
 In your view, use QuickTable to configure columns, templates, and output the thead and tbody:
 ```
@@ -46,7 +46,9 @@ $qt = $sorter->quickTable('foo') // pass the table name, or you can omit for onl
 	->addCol('customer_address', 'Address', 'asc', '$customer_address<br>$customer_city')
 	
 	// typical formats
-	->addCol('balance', 	'Balance', 		'desc', 'money')
+	->addCol('iscash', 		'Cash', 		'desc', 'yesno')
+	->addCol('amount', 		'Amount', 		'desc', 'money')
+	->addCol('balance', 	'Balance', 		'desc', 'balance') // negative values are shown with parentheses
 	->addCol('widgetcount', '# of Widgets', 'desc', 'number')	// number with grouped thousands
 	->addCol('ph_level', 	'pH', 			'desc', 'number_1') // 1 decimal place
 	->addCol('created', 	'Created', 		'desc', 'datetime') 
@@ -59,10 +61,7 @@ $qt = $sorter->quickTable('foo') // pass the table name, or you can omit for onl
 	})
 ;
 ?>
-<table class="table">
-	<?= $qt->thead() ?>
-	<?= $qt->tbody($customers) ?>
-</table>
+<?= $qt->table($list, 'class="table table-bordered"') ?>
 ```
 
 For more control, you can also build links in your view using anchorIcon(), anchor(), url(), queryString() or queryArray()
