@@ -48,7 +48,7 @@ class QuickTable{
 		return $this;
 	}
 	
-	public function addCol(?string $field, string $label, string $defaultSort='asc', $template=NULL){
+	public function addCol(?string $field, string $label, ?string $defaultSort='asc', $template=NULL){
 		$this->currentTable = $this->currentTable ?? reset($this->sorter->tableNames());
 		$qc = new QuickCol();
 		$qc->table = $tthis->currentTable;
@@ -97,7 +97,11 @@ class QuickCol{
 	public function th():string{
 		$dataAttr = $this->field ? " data-quickcol-th=\"$this->table.$this->field\"" : '';
 		$out = "<th$dataAttr>";
-		$this->sorter->anchorIcon("$this->field $this->defaultSort", $this->label);
+		if($this->field){
+			$out .= $this->sorter->anchorIcon("$this->field $this->defaultSort", $this->label);
+		}else{
+			$out .= $this->label;
+		}
 		$out .= '</th>';
 		return $out;
 	}
