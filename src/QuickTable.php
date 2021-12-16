@@ -8,8 +8,10 @@ use CodeIgniter\I18n\Time;
 class QuickTable{
 	protected $currentTable;
 	protected $cols = [];
+	protected $sorter;
 	
-	public function __construct(string $tableName){
+	public function __construct(Sorter $sorter, string $tableName){
+		$this->sorter = $sorter;
 		$this->currentTable = $tableName;
 	}
 	
