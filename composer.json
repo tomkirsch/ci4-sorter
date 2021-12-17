@@ -11,5 +11,8 @@
         "psr-4": {
             "Tomkirsch\\Sorter\\": "src/"
         }
-    }
+    },
+	"archive": {
+        "exclude": ["tests"]
+     }
 }

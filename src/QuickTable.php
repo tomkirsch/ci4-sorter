@@ -3,8 +3,6 @@
 	Quickly output <table> html for a database result.
 */
 
-use CodeIgniter\I18n\Time;
-
 class QuickTable{
 	protected $currentTable;
 	protected $cols = [];
@@ -21,6 +19,8 @@ class QuickTable{
 		$qc->field = $field;
 		$qc->defaultSort = $defaultSort;
 		$qc->template = $template;
+		$qc->label = $field ? $this->sorter->anchorIcon("$field $defaultSort", $label) : $label;
+		
 		$this->cols[] = $qc;
 		return $this;
 	}
@@ -28,11 +28,11 @@ class QuickTable{
 		return "<table $attr>".$this->thead().$this->tbody($data)."</table>";
 	}
 	public function thead():string{
-		$out = '<thead>';
+		$out = '<thead><tr>';
 		foreach($this->cols as $col){
-			$out .= "<tr>".$col->th()."</tr>";
+			$out .= $col->th();
 		}
-		$out .= '</thead>';
+		$out .= '</tr></thead>';
 		return $out;
 	}
 	public function tbody(array $data):string{
@@ -64,47 +64,49 @@ class QuickCol{
 	
 	public function th():string{
 		$dataAttr = $this->field ? " data-quickcol-th=\"$this->table.$this->field\"" : '';
-		$out = "<th$dataAttr>";
-		if($this->field){
-			$out .= $this->sorter->anchorIcon("$this->field $this->defaultSort", $this->label);
-		}else{
-			$out .= $this->label;
-		}
-		$out .= '</th>';
+		$out = "<th$dataAttr>$this->label</th>";
 		return $out;
 	}
 	public function td($row):string{
 		if(is_array($row)) $row = (object) $row;
 		$dataAttr = $this->field ? " data-quickcol-td=\"$this->table.$this->field\"" : '';
 		$out = "<td$dataAttr>";
-		$value = $this->field ? $row->$this->field : NULL;
+		$value = $this->field ? $row->{$this->field} : NULL;
 		
-		// if template is callable, use that for the <td> tags as well
-		if(is_callable($this->template)){
-			$out = $this->template($value, $row); // a function template should also return the tags
-			return $out; // that's all, leave the method!
+		// look for predefined templates first
+		$formattedValue = is_string($this->template) ? $this->formatTemplate($this->template, $value) : NULL;
+		if($formattedValue){
+			// all done
+			return $out.$formattedValue.'</td>';
 		}
 		
-		// look for predefined templates
-		$formattedValue = $this->formatTemplate($this->template, $value);
-		if($formattedValue === NULL){
-			// no template found
-			// look for $ variables
-			if(is_string($this->template)){
-				if($this->field && preg_match_all('/(\$[a-z_]+)/', $this->field, $matches)){
-					$trans = [];
-					foreach($matches[0] as $var){
-						$nodollarVar = substr($var, 1);
-						$trans[$var] = $row->$nodollarVar; // '$customer_name' => $row->customer_name
-					}
-					$formattedValue = strtr($this->template, $trans);
-				}else{
-					$formattedValue = $this->template;
+		// is template a closure?
+		if(is_object($this->template) && ($this->template instanceof \Closure)){
+			// closure... we pass the entire $row as second arg
+			// note we ditch $out
+			$closure = $this->template; // we must place it in a variable to call it
+			return $closure($value, $row);
+		// is template a callable function?
+		}else if(is_string($this->template) && function_exists($this->template)){
+			// something like ucwords()...
+			return $out.call_user_func($this->template, $value).'</td>';
+		}
+		
+		// look for $ variables
+		if(is_string($this->template)){
+			if(preg_match_all('/(\$[a-z_]+)/', $this->template, $matches)){
+				$trans = [];
+				foreach($matches[0] as $var){
+					$nodollarVar = substr($var, 1);
+					$trans[$var] = $row->$nodollarVar; // '$customer_name' => $row->customer_name
 				}
+				$formattedValue = strtr($this->template, $trans);
 			}else{
-				// not callable and not a string... use the value if not null
-				$formattedValue = $value ?? '';
+				$formattedValue = $this->template;
 			}
+		}else{
+			// not a string... use the value if not null
+			$formattedValue = $value ?? '';
 		}
 		
 		$out .= $formattedValue.'</td>';
@@ -119,9 +121,9 @@ class QuickCol{
 			$argument = substr($templateName, $pos + 1);
 			$templateName = substr($templateName, 0, $pos);
 		}
-		switch($this->template){
+		switch($templateName){
 			case 'yesno':
-				if($argument === NULL) return '';
+				if($value === NULL) return '';
 				return (bool) $value ? 'Yes' : 'No';
 			case 'number':
 				if($argument !== NULL){
@@ -149,8 +151,8 @@ class QuickCol{
 	}
 	
 	protected function ensureDate($value){
-		if(!is_a('CodeIgniter\I18n\Time') && !is_a($value, 'DateTime')){
-			$value = new DateTime($value);
+		if(!is_a($value, '\CodeIgniter\I18n\Time') && !is_a($value, '\DateTime')){
+			$value = new \DateTime($value);
 		}
 		return $value;
 	}
