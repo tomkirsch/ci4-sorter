@@ -75,7 +75,7 @@ class QuickCol{
 		
 		// look for predefined templates first
 		$formattedValue = is_string($this->template) ? $this->formatTemplate($this->template, $value) : NULL;
-		if($formattedValue){
+		if($formattedValue !== NULL){
 			// all done
 			return $out.$formattedValue.'</td>';
 		}
