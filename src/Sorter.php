@@ -41,7 +41,7 @@ class Sorter{
 	
 	public function quickTable(?string $tableName = NULL):QuickTable{
 		$tableName = $tableName ?? $this->tableNames()[0];
-		$qt = new QuickTable($tableName);
+		$qt = new QuickTable($this, $tableName);
 		return $qt;
 	}
 	
