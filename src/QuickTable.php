@@ -36,6 +36,7 @@ class QuickTable
 	public function rowTemplate($template = NULL)
 	{
 		$this->rowTemplate = $template;
+		return $this;
 	}
 
 	public function table(array $data, string $attr = ''): string
