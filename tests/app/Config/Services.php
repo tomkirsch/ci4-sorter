@@ -19,8 +19,9 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    public static function sorter(array $tables=[], ?string $url=NULL, $getShared=TRUE){
-		$sorter = $getShared ? static::getSharedInstance('sorter', $tables, $url) : new \Tomkirsch\Sorter\Sorter($tables, $url);
-		return $sorter;
-	}
+    public static function sorter(array $tables = [], ?string $url = NULL, $getShared = TRUE)
+    {
+        $sorter = $getShared ? static::getSharedInstance('sorter', $tables, $url) : new \Tomkirsch\Sorter\Sorter($tables, $url);
+        return $sorter;
+    }
 }

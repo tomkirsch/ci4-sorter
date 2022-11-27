@@ -2,27 +2,16 @@
 
 namespace Tomkirsch\Sorter;
 
-/*
-	Controls sorting in tables.
-	
-	// get the library, and optionally define your table with default field and order, separated with a space
-	$sorter = service('sorter', ['categories'=>'category_ordernum asc']); // you can define more than one table too
-	
-	// use it in your query
-	$model->orderBy($sorter->getSort())->findAll();
-	// or if you have more than one table:
-	$model->orderBy($sorter->getSort('categories'))->findAll();
-	
-	// use QuickTable for simple tables. See QuickTable class for documentation
-	$catTable = $sorter->quickTable('categories')->addCol('category_name', 'Category');
-	$thead = $catTable->thead();
-	$tbody = $catTable->tbody($categories);
-	
-	// or, build links in your view using anchorIcon(), anchor(), url(), queryString() or queryArray()
-	<th><?= $sorter->anchorIcon('category_ordernum desc', 'Order') ?></th>
-	// or if you have more than one table:
-	<th><?= $sorter->anchorIcon('category_ordernum desc', 'Order', '', 'cat') ?></th>
-*/
+/**
+ * Controls sorting in tables.
+ * Usage: 
+ * $sorter = \Config::sorter(['categories'=>'category_ordernum asc']);
+ * $list = $model->orderBy($sorter->getSort())->findAll();
+ * 
+ * Quick Tables can easily spit out the sortable columns in your views:
+ * $qt = $sorter->quickTable('categories')->addCol('category_name', 'Category');
+ * print $qt->table();
+ */
 
 class Sorter
 {
@@ -30,13 +19,40 @@ class Sorter
 	const GET_FIELD_KEY = 'field';
 	const GET_DIR_KEY = 'dir';
 
+	/**
+	 * @var SorterConfig
+	 */
+	public $config;
+
+	/**
+	 * @var string The base URL to use for sortable links. Defaults to current_url()
+	 */
 	protected $url;
+
+	/**
+	 * @var array The current sorts (read in request)
+	 */
 	protected $currentSort;
+
+	/**
+	 * @var array All GET data
+	 */
 	protected $currentGetArray;
+
+	/**
+	 * @var array List of tables for the current request
+	 */
 	protected $tables = [];
 
-	public function __construct(array $tables = [], ?string $url = NULL)
+	/**
+	 * Pass an assoc array of tables, with values being the default field and sort dir
+	 * @param array $tables Ex: ['categories'=>'category_ordernum asc']
+	 * @param null|string $url Defaults to current_url()
+	 * @param null|SorterConfig $config
+	 */
+	public function __construct(array $tables = [], ?string $url = NULL, ?SorterConfig $config = NULL)
 	{
+		$this->config = $config ?? new SorterConfig();
 		$this->url = $url ?? current_url();
 		$request = service('request');
 		$this->currentGetArray = $request->getGet() ?? [];
@@ -44,6 +60,10 @@ class Sorter
 		$this->setTables($tables);
 	}
 
+	/**
+	 * Gets the QuickTable instance for the given table name
+	 * @param null|string $tableName If no table is passed, it will use the first one.
+	 */
 	public function quickTable(?string $tableName = NULL): QuickTable
 	{
 		$tableName = $tableName ?? $this->tableNames()[0];
@@ -51,12 +71,18 @@ class Sorter
 		return $qt;
 	}
 
+	/**
+	 * Sets the base url for sorting links
+	 */
 	public function setUrl(string $url)
 	{
 		$this->url = $url;
 		return $this;
 	}
 
+	/**
+	 * Add a table to the list
+	 */
 	public function addTable(string $table, ?string $defaultField = NULL, ?string $defaultDir = NULL)
 	{
 		if (isset($this->tables[$table])) throw new \Exception("Table [$table] has already been defined.");
@@ -64,6 +90,9 @@ class Sorter
 		$this->setTable($table, $parts[0] ?? NULL, $defaultDir ?? $parts[1] ?? NULL);
 	}
 
+	/**
+	 * See constructor
+	 */
 	public function setTables(array $tables)
 	{
 		foreach ($tables as $table => $data) {
@@ -73,6 +102,9 @@ class Sorter
 		return $this;
 	}
 
+	/**
+	 * Sets properties for the given table
+	 */
 	public function setTable(string $table, ?string $defaultField = NULL, ?string $defaultDir = NULL)
 	{
 		$this->tables[$table] = new SorterTable($table, [
@@ -84,20 +116,26 @@ class Sorter
 		return $this;
 	}
 
-	// get table names that have been defined
+	/**
+	 * Get table names that have been defined
+	 */
 	public function tableNames(): array
 	{
 		return array_keys($this->tables);
 	}
 
-	// gets sort string for sql
+	/**
+	 * Gets sort string for sql
+	 */
 	public function getSort(?string $tableName = NULL): string
 	{
 		$table = $tableName ? $this->tables[$tableName] : reset($this->tables);
 		return $table->getSort();
 	}
 
-	// gets the current direction for a field, or NULL if it isn't being sorted by this field
+	/**
+	 * Gets the current direction for a field, or NULL if it isn't being sorted by this field
+	 */
 	public function currentDir(string $field, ?string $tableName = NULL): ?string
 	{
 		$table = $tableName ? $this->tables[$tableName] : reset($this->tables);
@@ -106,13 +144,17 @@ class Sorter
 		return ($table->currentField === $field) ? $table->dir() : NULL;
 	}
 
-	// anchor + icon
+	/**
+	 * Anchor + icon html
+	 */
 	public function anchorIcon(string $field, string $content, $attr = '', ?string $table = NULL, bool $mergeCurrentGet = TRUE, array $params = []): string
 	{
 		return $this->anchor($field, $content . ' ' . $this->icon($field, $table), $attr, $table, $mergeCurrentGet, $params);
 	}
 
-	// icon
+	/**
+	 * Icon html
+	 */
 	public function icon(string $field, ?string $table = NULL): ?string
 	{
 		$dir = $this->currentDir($field, $table);
@@ -120,13 +162,17 @@ class Sorter
 		return '<i class="fa fa-sort-' . $dir . '"></i>';
 	}
 
-	// html anchor
+	/**
+	 * Anchor html
+	 */
 	public function anchor(string $field, string $content, $attr = '', ?string $table = NULL, bool $mergeCurrentGet = TRUE, array $params = []): string
 	{
 		return anchor($this->url($field, $table, $mergeCurrentGet, $params), $content, $attr);
 	}
 
-	// get a url for sorting link
+	/**
+	 * Generate a url for sorting links
+	 */
 	public function url(string $field, ?string $table = NULL, bool $mergeCurrentGet = TRUE, array $params = []): string
 	{
 		$q = stristr($this->url, '?') === FALSE ? '?' : '&';
@@ -134,7 +180,9 @@ class Sorter
 		return $this->url . $q;
 	}
 
-	// utility - run http_build_query()
+	/**
+	 * utility - run http_build_query()
+	 */
 	public function queryString(string $field, ?string $table = NULL, bool $mergeCurrentGet = TRUE, array $params = []): string
 	{
 		$ar = $this->queryArray($field, $table);
@@ -145,7 +193,9 @@ class Sorter
 		return http_build_query($ar);
 	}
 
-	// utility - get sort array for GET
+	/**
+	 * utility - get sort array for GET
+	 */
 	public function queryArray(string $field, ?string $tableName = NULL): array
 	{
 		$table = $tableName ? $this->tables[$tableName] : reset($this->tables);
@@ -166,6 +216,9 @@ class Sorter
 	}
 }
 
+/**
+ * A container for sorter tables
+ */
 class SorterTable
 {
 	public $id;
@@ -183,7 +236,9 @@ class SorterTable
 			}
 		}
 	}
-	// get sort string for SQL
+	/**
+	 * get sort string for SQL
+	 */
 	public function getSort(): string
 	{
 		$field = $this->field();

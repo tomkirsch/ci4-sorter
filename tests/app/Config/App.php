@@ -3,9 +3,12 @@
 namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
+use CodeIgniter\Session\Handlers\FileHandler;
 
 class App extends BaseConfig
 {
+    public $localTimezone = "America/Chicago";
+
     /**
      * --------------------------------------------------------------------------
      * Base Site URL
@@ -43,7 +46,7 @@ class App extends BaseConfig
      * URI PROTOCOL
      * --------------------------------------------------------------------------
      *
-     * This item determines which getServer global should be used to retrieve the
+     * This item determines which server global should be used to retrieve the
      * URI string.  The default setting of 'REQUEST_URI' works for most servers.
      * If your links do not seem to work, try one of the other delicious flavors:
      *
@@ -151,7 +154,7 @@ class App extends BaseConfig
      *
      * @var string
      */
-    public $sessionDriver = 'CodeIgniter\Session\Handlers\FileHandler';
+    public $sessionDriver = FileHandler::class;
 
     /**
      * --------------------------------------------------------------------------
@@ -318,7 +321,7 @@ class App extends BaseConfig
      * (empty string) means default SameSite attribute set by browsers (`Lax`)
      * will be set on cookies. If set to `None`, `$cookieSecure` must also be set.
      *
-     * @var string
+     * @var string|null
      *
      * @deprecated use Config\Cookie::$samesite property instead.
      */
@@ -436,7 +439,8 @@ class App extends BaseConfig
      * Defaults to `Lax` as recommended in this link:
      *
      * @see https://portswigger.net/web-security/csrf/samesite-cookies
-     * @deprecated Use `Config\Security` $samesite property instead of using this property.
+     *
+     * @deprecated `Config\Cookie` $samesite property is used.
      *
      * @var string
      */

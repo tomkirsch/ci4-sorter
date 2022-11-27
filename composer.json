@@ -1,10 +1,10 @@
 {
     "name": "tomkirsch/sorter",
-    "type": "library",
+    "type": "project",
     "description": "Sorter Library for CI4",
 	"license": "MIT",
     "require": {
-        "php": ">=7.2",
+        "php": "^7.3||^8.0",
 	"codeigniter4/framework": "^4"
     },
     "autoload": {
