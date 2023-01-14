@@ -24,7 +24,7 @@
 		->addCol('photo_created', 'date', 'asc', 'date')
 		->addCol('photo_created', 'datetime', 'asc', 'datetime')
 		->addCol('photo_modified', 'time', 'asc', 'time')
-		->addCol('photo_modified', 'dateFormat', 'asc', 'dateFormat_l, F d')
+		->addCol('photo_modified', 'dateFormat', 'asc', 'dateFormat|l, F d')
 		->addCol(NULL, 'variable replacement', NULL, '$photo_url | $photo_artistrating')
 		->addCol(NULL, 'custom function', NULL, function ($value, $row) {
 			return '<td>' . strlen($row->photo_title ?? "") . '</td>';

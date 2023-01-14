@@ -145,7 +145,7 @@ class QuickCol
 		$out = "<td$dataAttr>";
 		$value = $this->field ? $row->{$this->field} : NULL;
 
-		// look for predefined templates first
+		// look for predefined templates or global functions
 		$formattedValue = is_string($this->template) ? $this->formatTemplate($this->template, $value, $row) : NULL;
 		if ($formattedValue !== NULL) {
 			// all done
@@ -159,9 +159,6 @@ class QuickCol
 			$closure = $this->template; // we must place it in a variable to call it
 			return $closure($value, $row);
 			// is template a callable function?
-		} else if (is_string($this->template) && function_exists($this->template)) {
-			// something like ucwords()...
-			return $out . call_user_func($this->template, $value) . '</td>';
 		}
 
 		// look for $ variables
@@ -186,14 +183,14 @@ class QuickCol
 	}
 
 	/**
-	 * Pass arguments with underscore: (ex: 'dateFormat_l, fS Y')
+	 * Pass arguments with pipe: (ex: 'dateFormat|l, fS Y')
 	 * Returns NULL only when no predefined template was found
 	 */
 	protected function formatTemplate(string $templateName, $value, $row): ?string
 	{
 		$arguments = [];
-		if (stristr($templateName, '_')) {
-			$parts = explode("_", $templateName);
+		if (stristr($templateName, '|')) {
+			$parts = explode("|", $templateName);
 			$templateName = array_shift($parts);
 			$arguments = $parts;
 		}
@@ -219,6 +216,9 @@ class QuickCol
 			case 'dateFormat':
 				return ($value === NULL) ? '' : $this->ensureDate($value, $row)->format(...$arguments);
 			default:
+				if (function_exists($templateName)) {
+					return $templateName($value, ...$arguments);
+				}
 				return NULL; // no template found
 		}
 	}
