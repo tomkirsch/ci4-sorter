@@ -192,8 +192,8 @@ class QuickCol
 	protected function formatTemplate(string $templateName, $value, $row): ?string
 	{
 		$arguments = [];
-		$parts = explode("_", $templateName);
-		if (!empty($parts)) {
+		if (stristr($templateName, '_')) {
+			$parts = explode("_", $templateName);
 			$templateName = array_shift($parts);
 			$arguments = $parts;
 		}
@@ -202,6 +202,7 @@ class QuickCol
 				if ($value === NULL) return '';
 				return (bool) $value ? 'Yes' : 'No';
 			case 'number':
+				dd(...$arguments);
 				return ($value === NULL) ? '' : number_format($value, ...$arguments);
 			case 'money':
 				if ($value === NULL) return '';
