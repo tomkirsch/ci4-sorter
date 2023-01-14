@@ -202,7 +202,6 @@ class QuickCol
 				if ($value === NULL) return '';
 				return (bool) $value ? 'Yes' : 'No';
 			case 'number':
-				dd(...$arguments);
 				return ($value === NULL) ? '' : number_format($value, ...$arguments);
 			case 'money':
 				if ($value === NULL) return '';
