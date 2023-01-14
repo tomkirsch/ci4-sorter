@@ -60,10 +60,10 @@ $qt = $sorter->quickTable('foo') // pass the table name, or you can omit for onl
 	->addCol('amount', 		'Amount', 		'desc', 'money')
 	->addCol('balance', 	'Balance', 		'desc', 'balance') // negative values are shown with parentheses
 	->addCol('widgetcount', '# of Widgets', 'desc', 'number')	// number with grouped thousands
-	->addCol('ph_level', 	'pH', 			'desc', 'number_1') // 1 decimal place
+	->addCol('ph_level', 	'pH', 			'desc', 'number|1') // 1 decimal place (arguments separated by pipe)
 	->addCol('created', 	'Created', 		'desc', 'datetime')
 	->addCol('thetime', 	'Time', 		'desc', 'time')
-	->addCol('schedule', 	'Sched Date', 	'desc', 'dateFormat_D m/d') // custom date format
+	->addCol('schedule', 	'Sched Date', 	'desc', 'dateFormat|D m/d') // custom date format (arguments separated by pipe)
 
 	// closure (most flexible - however you MUST return TD tags)
 	->addCol('customer_iscash', 'Cash', 'desc', function($value, $row){
