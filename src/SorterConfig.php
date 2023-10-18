@@ -13,7 +13,7 @@ class SorterConfig extends BaseConfig
      */
     public function getDate($time, string $field, $row): Time
     {
-        $appConfig = config("app");
+        $appConfig = config("App");
         if (!is_a($time, '\CodeIgniter\I18n\Time')) $time = new Time($time);
         if ($time->getUtc() && !empty($appConfig->localTimezone)) {
             $time = $time->setTimezone($appConfig->localTimezone);
